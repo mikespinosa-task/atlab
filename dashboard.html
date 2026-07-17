@@ -17,7 +17,11 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;}
+  body{
+    background: linear-gradient(160deg, #FAF8F4 0%, #F1F0FB 55%, #ECEEFC 100%);
+    background-attachment: fixed;
+    color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+  }
 
   .app{display:flex; min-height:100vh;}
   .sidebar{width:72px; background:var(--ink); display:flex; flex-direction:column; align-items:center; padding:22px 0; position:fixed; top:0; left:0; bottom:0; z-index:50;}
@@ -59,7 +63,20 @@
   .caption{font-size:12px; color:var(--muted); margin:-8px 0 16px;}
 
   .kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px;}
-  .kpi-card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-sm); padding:18px 20px; position:relative;}
+  .stat-pills{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:22px;}
+  .stat-pill{display:flex; align-items:center; gap:8px; background:var(--ink); color:#fff; border-radius:100px; padding:8px 8px 8px 16px; font-size:12px; font-weight:600;}
+  .stat-pill .pct{background:var(--accent); color:#fff; border-radius:100px; padding:4px 11px; font-family:'Anton',sans-serif; font-size:13px; font-weight:400;}
+  .stat-pill.light{background:var(--paper); color:var(--ink); border:1px solid rgba(10,10,10,.08);}
+  .stat-pill.light .pct{background:var(--ink);}
+
+  .ring-wrap{display:flex; align-items:center; justify-content:center; gap:16px;}
+  .ring-svg{transform:rotate(-90deg);}
+  .ring-bg{fill:none; stroke:var(--bg); stroke-width:8;}
+  .ring-fg{fill:none; stroke:var(--accent); stroke-width:8; stroke-linecap:round; transition:stroke-dashoffset .6s ease;}
+  .ring-center-value{font-family:'Anton',sans-serif; font-size:22px;}
+
+  .kpi-card.ring-card{display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;}
+  .kpi-card{background:var(--paper); border:1px solid rgba(10,10,10,0.05); border-radius:18px; padding:18px 20px; position:relative; box-shadow:0 1px 2px rgba(10,10,10,.03), 0 10px 24px -12px rgba(30,30,60,.10);}
   .kpi-label{font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; display:flex; align-items:center; gap:6px;}
   .kpi-value{font-family:'Anton',sans-serif; font-size:34px; line-height:1.1; margin-top:8px;}
   .kpi-value small{font-family:'Inter',sans-serif; font-size:15px; font-weight:700; color:var(--muted); margin-left:2px;}
@@ -81,7 +98,7 @@
   .funnel-arrow-sub{font-size:9px; font-weight:600; color:#6E6E86; margin-top:4px; text-transform:none;}
   .funnel-note{font-size:11px; color:#8C8CA6; margin-top:20px; line-height:1.6;}
 
-  .chart-card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-sm); padding:22px; margin-top:16px;}
+  .chart-card{background:var(--paper); border:1px solid rgba(10,10,10,0.05); border-radius:18px; padding:22px; margin-top:16px; box-shadow:0 1px 2px rgba(10,10,10,.03), 0 10px 24px -12px rgba(30,30,60,.10);}
   .chart-card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
   .chart-card-head h3{font-size:13px; font-weight:800; margin:0; text-transform:uppercase; letter-spacing:.04em;}
   .mini-toggle{display:flex; gap:4px; background:var(--bg); border-radius:100px; padding:3px;}
@@ -98,6 +115,9 @@
   td{padding:12px; border-bottom:1px solid var(--line); vertical-align:middle;}
   tr:last-child td{border-bottom:none;}
   .num{font-variant-numeric:tabular-nums; font-weight:600;}
+  .sortable{cursor:pointer; user-select:none;}
+  .sortable:hover{color:var(--ink);}
+  .sort-arrow{font-size:9px; margin-left:3px; opacity:.6;}
   .btn-preview{border:1px solid var(--line); background:var(--paper); color:var(--ink); font-family:inherit; font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:100px; cursor:pointer;}
   .btn-preview:hover{border-color:var(--accent); color:var(--accent-dark);}
 
@@ -194,11 +214,19 @@
           <div class="kpi-label">Clientes nuevos</div>
           <div class="kpi-value" id="kpiCli">—</div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Conversión Lya → Cliente</div>
-          <div class="kpi-value" id="kpiConv">—</div>
+        <div class="kpi-card ring-card">
+          <div class="kpi-label" style="margin-bottom:6px;">Conversión Lya → Cliente</div>
+          <div class="ring-wrap">
+            <svg class="ring-svg" width="88" height="88" viewBox="0 0 88 88">
+              <circle class="ring-bg" cx="44" cy="44" r="38"></circle>
+              <circle class="ring-fg" id="ringConv" cx="44" cy="44" r="38" stroke-dasharray="238.76" stroke-dashoffset="238.76"></circle>
+            </svg>
+          </div>
+          <div class="ring-center-value" id="kpiConv" style="margin-top:-58px;">—</div>
         </div>
       </div>
+
+      <div class="stat-pills" id="statPills"></div>
 
       <div class="funnel-wrap">
         <div class="funnel-steps">
@@ -283,14 +311,15 @@
       </div>
 
       <div class="section-title">Campañas</div>
+      <input type="text" class="search-input" id="campSearchInput" placeholder="Buscar campaña o anuncio...">
       <div class="chart-card" style="padding:10px 22px 22px;">
-        <table><thead><tr><th>Campaña</th><th>Inversión</th><th>Mensajes</th><th>Costo/msg</th><th>Clics</th></tr></thead><tbody id="campTable"></tbody></table>
+        <table><thead><tr id="campTableHead"></tr></thead><tbody id="campTable"></tbody></table>
       </div>
 
       <div class="section-title">Anuncios — mejor desempeño</div>
-      <div class="caption">Ordenados de menor a mayor costo por mensaje.</div>
+      <div class="caption">Ordenados de menor a mayor costo por mensaje. Clic en un encabezado para cambiar el orden.</div>
       <div class="chart-card" style="padding:10px 22px 22px;">
-        <table><thead><tr><th>Anuncio</th><th>Campaña</th><th>Inversión</th><th>Mensajes</th><th>Costo/msg</th><th></th></tr></thead><tbody id="adsTable"></tbody></table>
+        <table><thead><tr id="adsTableHead"></tr></thead><tbody id="adsTable"></tbody></table>
       </div>
     </div>
 
@@ -299,7 +328,7 @@
       <div class="section-title">Buscar en Maestro_Cruce</div>
       <input type="text" class="search-input" id="searchInput" placeholder="Buscar por teléfono o nombre...">
       <div class="chart-card" style="padding:10px 22px 22px;">
-        <table><thead><tr><th>Teléfono</th><th>Nombre</th><th>Etapa</th><th>Fecha Lya</th><th>Fecha Prospecto</th><th>Fecha Cliente</th></tr></thead><tbody id="detailTable"></tbody></table>
+        <table><thead><tr id="detailTableHead"></tr></thead><tbody id="detailTable"></tbody></table>
         <div class="caption" id="detailCount" style="margin-top:10px;"></div>
       </div>
     </div>
@@ -494,7 +523,16 @@ function initDashboard(){
     document.getElementById('kpiLya').textContent = fmtInt(totalLya);
     document.getElementById('kpiPros').textContent = fmtInt(totalPros);
     document.getElementById('kpiCli').textContent = fmtInt(totalCli);
-    document.getElementById('kpiConv').innerHTML = pctLyaCli.toFixed(1)+'<small>%</small>';
+    document.getElementById('kpiConv').textContent = pctLyaCli.toFixed(1)+'%';
+    const RING_CIRC = 238.76;
+    document.getElementById('ringConv').style.strokeDashoffset = RING_CIRC - (RING_CIRC * Math.min(pctLyaCli,100) / 100);
+
+    document.getElementById('statPills').innerHTML = `
+      <div class="stat-pill">Lya → Prospecto <span class="pct">${pctLyaPros.toFixed(1)}%</span></div>
+      <div class="stat-pill">Clientes con prospecto previo <span class="pct">${pctCliConPros.toFixed(1)}%</span></div>
+      <div class="stat-pill light">Costo/prospecto <span class="pct">${fmtCOP(costPerPros)}</span></div>
+      <div class="stat-pill light">Costo/cliente <span class="pct">${fmtCOP(costPerCli)}</span></div>
+    `;
 
     document.getElementById('fLya').textContent = fmtInt(totalLya);
     document.getElementById('fPros').textContent = fmtInt(totalPros);
@@ -566,6 +604,44 @@ function initDashboard(){
     return { labels:dates, spend:dates.map(d=>byDate[d].spend), msgs:dates.map(d=>byDate[d].msgs), costMsg:dates.map(d=>byDate[d].msgs?byDate[d].spend/byDate[d].msgs:null) };
   }
 
+  // ---- helpers genéricos para tablas ordenables ----
+  function toggleSort(state, key, defaultDir){
+    if(state.col === key) state.dir *= -1; else { state.col = key; state.dir = defaultDir || -1; }
+  }
+  function sortRows(rows, state){
+    return [...rows].sort((a,b)=>{
+      let va=a[state.col], vb=b[state.col];
+      const aNull = (va===null||va===undefined||va==='');
+      const bNull = (vb===null||vb===undefined||vb==='');
+      if(aNull && bNull) return 0;
+      if(aNull) return 1;
+      if(bNull) return -1;
+      if(typeof va === 'string') return state.dir * va.localeCompare(vb);
+      return state.dir * ((va||0)-(vb||0));
+    });
+  }
+  function headerRow(cols, state){
+    return cols.map(c=>{
+      if(c.nosort) return `<th>${c.label}</th>`;
+      const active = state.col === c.key;
+      const arrow = active ? (state.dir>0?'▲':'▼') : '';
+      return `<th class="${c.numeric?'num ':''}sortable" data-key="${c.key}">${c.label}<span class="sort-arrow">${arrow}</span></th>`;
+    }).join('');
+  }
+  function bindHeaderSort(theadId, state, onSort){
+    document.querySelectorAll(`#${theadId} .sortable`).forEach(th=>{
+      th.addEventListener('click', ()=>{ toggleSort(state, th.dataset.key); onSort(); });
+    });
+  }
+  function emptyRow(colspan){ return `<tr><td colspan="${colspan}" style="color:var(--muted)">Sin datos.</td></tr>`; }
+
+  const CAMP_COLS = [{key:'name',label:'Campaña'},{key:'spend',label:'Inversión',numeric:true},{key:'msgs',label:'Mensajes',numeric:true},{key:'costMsg',label:'Costo/msg',numeric:true},{key:'clicks',label:'Clics',numeric:true}];
+  const ADS_COLS = [{key:'ad',label:'Anuncio'},{key:'campana',label:'Campaña'},{key:'spend',label:'Inversión',numeric:true},{key:'msgs',label:'Mensajes',numeric:true},{key:'costMsg',label:'Costo/msg',numeric:true},{key:'_preview',label:'',nosort:true}];
+  let sortCamp = {col:'spend', dir:-1};
+  let sortAds = {col:'costMsg', dir:1};
+  let campSearchQuery = '';
+  let lastCampRowsObjs = [], lastAdRowsObjs = [];
+
   function renderCampaignsTable(fbF){
     const byCamp = {}, byAd = {};
     fbF.forEach(r=>{
@@ -575,24 +651,54 @@ function initDashboard(){
       if(!byAd[adKey]) byAd[adKey] = {ad:r.ad, campana:r.campana, spend:0, msgs:0, preview:r.preview};
       byAd[adKey].spend+=r.spend; byAd[adKey].msgs+=r.msgs; if(r.preview) byAd[adKey].preview=r.preview;
     });
-    const campRows = Object.entries(byCamp).sort((a,b)=>b[1].spend-a[1].spend);
-    document.getElementById('campTable').innerHTML = campRows.map(([name,c])=>`
-      <tr><td>${name}</td><td class="num">${fmtCOP(c.spend)}</td><td class="num">${fmtInt(c.msgs)}</td>
-      <td class="num">${fmtCOP(c.msgs?c.spend/c.msgs:NaN)}</td><td class="num">${fmtInt(c.clicks)}</td></tr>
-    `).join('') || '<tr><td colspan="5" style="color:var(--muted)">Sin datos en este rango.</td></tr>';
+    const campRows = Object.entries(byCamp).sort((a,b)=>b[1].spend-a[1].spend); // para las gráficas (formato tuple)
+    lastCampRows = campRows;
 
-    const adRows = Object.values(byAd).filter(a=>a.msgs>0).map(a=>({...a, costMsg:a.spend/a.msgs})).sort((a,b)=>a.costMsg-b.costMsg);
-    const tbodyAds = document.getElementById('adsTable'); tbodyAds.innerHTML = '';
-    adRows.forEach(a=>{
+    lastCampRowsObjs = Object.entries(byCamp).map(([name,c])=>({name, spend:c.spend, msgs:c.msgs, clicks:c.clicks, costMsg: c.msgs? c.spend/c.msgs : NaN}));
+    lastAdRowsObjs = Object.values(byAd).filter(a=>a.msgs>0).map(a=>({...a, costMsg:a.spend/a.msgs}));
+
+    renderCampTableHead();
+    renderAdsTableHead();
+    renderCampTableBody();
+    renderAdsTableBody();
+  }
+
+  function renderCampTableHead(){
+    document.getElementById('campTableHead').innerHTML = headerRow(CAMP_COLS, sortCamp);
+    bindHeaderSort('campTableHead', sortCamp, ()=>renderCampTableBody());
+  }
+  function renderCampTableBody(){
+    let rows = lastCampRowsObjs;
+    if(campSearchQuery) rows = rows.filter(r=>r.name.toLowerCase().includes(campSearchQuery));
+    rows = sortRows(rows, sortCamp);
+    document.getElementById('campTable').innerHTML = rows.map(r=>`
+      <tr><td>${r.name}</td><td class="num">${fmtCOP(r.spend)}</td><td class="num">${fmtInt(r.msgs)}</td>
+      <td class="num">${fmtCOP(r.costMsg)}</td><td class="num">${fmtInt(r.clicks)}</td></tr>
+    `).join('') || emptyRow(5);
+  }
+
+  function renderAdsTableHead(){
+    document.getElementById('adsTableHead').innerHTML = headerRow(ADS_COLS, sortAds);
+    bindHeaderSort('adsTableHead', sortAds, ()=>renderAdsTableBody());
+  }
+  function renderAdsTableBody(){
+    let rows = lastAdRowsObjs;
+    if(campSearchQuery) rows = rows.filter(r=> r.ad.toLowerCase().includes(campSearchQuery) || r.campana.toLowerCase().includes(campSearchQuery));
+    rows = sortRows(rows, sortAds);
+    const tbody = document.getElementById('adsTable'); tbody.innerHTML = '';
+    rows.forEach(a=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${a.ad}</td><td>${a.campana}</td><td class="num">${fmtCOP(a.spend)}</td><td class="num">${fmtInt(a.msgs)}</td><td class="num">${fmtCOP(a.costMsg)}</td><td>${a.preview?'<button class="btn-preview">Ver anuncio</button>':''}</td>`;
       if(a.preview) tr.querySelector('.btn-preview').addEventListener('click', ()=>openModal(a.ad, a.preview));
-      tbodyAds.appendChild(tr);
+      tbody.appendChild(tr);
     });
-    if(!adRows.length) tbodyAds.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">Sin datos en este rango.</td></tr>';
-
-    lastCampRows = campRows;
+    if(!rows.length) tbody.innerHTML = emptyRow(6);
   }
+  document.getElementById('campSearchInput').addEventListener('input', e=>{
+    campSearchQuery = e.target.value.trim().toLowerCase();
+    renderCampTableBody();
+    renderAdsTableBody();
+  });
 
   function renderCampCharts(fbF, campRows){
     const s = dailyFbSeries(fbF);
@@ -659,25 +765,36 @@ function initDashboard(){
     convMA = parseInt(btn.dataset.ma); render();
   }));
 
+  const DETAIL_COLS = [{key:'tel',label:'Teléfono'},{key:'nombre',label:'Nombre'},{key:'_etapa',label:'Etapa',nosort:true},{key:'lya',label:'Fecha Lya'},{key:'prospecto',label:'Fecha Prospecto'},{key:'cliente',label:'Fecha Cliente'}];
+  let sortDetail = {col:'cliente', dir:-1};
+  let lastDetailQuery = '';
+
   function etapaBadge(row){
     if(row.cliente) return '<span class="etapa-badge etapa-cliente">Cliente</span>';
     if(row.prospecto || row.historico) return '<span class="etapa-badge etapa-prospecto">Prospecto</span>';
     if(row.lya) return '<span class="etapa-badge etapa-lya">Solo Lya</span>';
     return '<span class="etapa-badge etapa-sc">Sin clasificar</span>';
   }
+  function renderDetailHead(){
+    document.getElementById('detailTableHead').innerHTML = headerRow(DETAIL_COLS, sortDetail);
+    bindHeaderSort('detailTableHead', sortDetail, ()=>renderDetail(lastDetailQuery));
+  }
   function renderDetail(query){
-    const q = (query||'').trim().toLowerCase();
+    lastDetailQuery = query || '';
+    const q = lastDetailQuery.trim().toLowerCase();
     let rows = MAESTRO;
     if(q) rows = rows.filter(r => (r.tel && r.tel.includes(q)) || (r.nombre && r.nombre.toLowerCase().includes(q)));
+    rows = sortRows(rows, sortDetail);
     const shown = rows.slice(0,200);
     document.getElementById('detailTable').innerHTML = shown.map(r => `
       <tr><td>${r.tel||''}</td><td>${r.nombre||'—'}</td><td>${etapaBadge(r)}</td>
       <td>${r.lya||'—'}</td><td>${r.prospecto||(r.historico?'<span class="pill gray">histórico</span>':'—')}</td><td>${r.cliente||'—'}</td></tr>
-    `).join('');
+    `).join('') || emptyRow(6);
     document.getElementById('detailCount').textContent = q ? `${rows.length} resultado(s) — mostrando ${shown.length}` : `${MAESTRO.length} registros totales — mostrando los primeros ${shown.length}. Escribe para buscar.`;
   }
   document.getElementById('searchInput').addEventListener('input', e=>renderDetail(e.target.value));
 
+  renderDetailHead();
   renderDetail('');
   render();
 }
